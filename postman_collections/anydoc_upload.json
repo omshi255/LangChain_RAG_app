@@ -1,0 +1,786 @@
+{
+  "info": {
+    "name": "RAG System API",
+    "_postman_id": "rag-system-collection-v1",
+    "description": "Complete RAG System — Upload any file (PDF, Word, Excel, CSV, PPT, Code, Images) and Query using Groq + Pinecone.\n\n## Setup\n1. Set `base_url` variable to your server URL\n2. Run any Upload request → `document_id` is auto-saved\n3. Run `POST /query` to ask questions\n\nSwagger UI: {{base_url}}/docs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "Base URL of your FastAPI server"
+    },
+    {
+      "key": "document_id",
+      "value": "",
+      "type": "string",
+      "description": "Auto-saved after any upload request"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Check if the server is running"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Server is running', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Status is ok', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('ok');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detailed Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Get detailed system info — models, Pinecone index, chunk config"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Health returns 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Has llm_model field', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('llm_model');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Document Upload",
+      "item": [
+        {
+          "name": "Upload PDF",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select your PDF file here"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/",
+              "host": ["{{base_url}}"],
+              "path": ["upload", ""]
+            },
+            "description": "Upload a PDF → extract text → chunk → embed → store in Pinecone.\n\n1. Click Body tab\n2. Select file field → choose your PDF\n3. Send\n4. document_id is auto-saved to collection variables"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "    pm.expect(json.document_id).to.be.a('string');",
+                  "    pm.expect(json.document_id.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Chunks were stored', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.chunks_stored).to.be.greaterThan(0);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload Word (.docx)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select your .docx or .doc file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/",
+              "host": ["{{base_url}}"],
+              "path": ["upload", ""]
+            },
+            "description": "Upload a Word document (.docx / .doc) → extract text → chunk → embed → store in Pinecone."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload Excel (.xlsx)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select your .xlsx or .xls file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/",
+              "host": ["{{base_url}}"],
+              "path": ["upload", ""]
+            },
+            "description": "Upload an Excel file (.xlsx / .xls) → all sheets extracted → chunk → embed → store in Pinecone."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload CSV",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select your .csv file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/",
+              "host": ["{{base_url}}"],
+              "path": ["upload", ""]
+            },
+            "description": "Upload a CSV file → parse all rows → chunk → embed → store in Pinecone."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload PowerPoint (.pptx)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select your .pptx or .ppt file"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/",
+              "host": ["{{base_url}}"],
+              "path": ["upload", ""]
+            },
+            "description": "Upload a PowerPoint file (.pptx / .ppt) → all slides extracted → chunk → embed → store in Pinecone."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload Code File (.py / .js / .ts etc)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select any code file: .py .js .ts .java .cpp .go .rs .php .rb .swift etc"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/",
+              "host": ["{{base_url}}"],
+              "path": ["upload", ""]
+            },
+            "description": "Upload any code or text file → extract content → chunk → embed → store in Pinecone.\n\nSupported: .py .js .ts .jsx .tsx .java .cpp .c .cs .go .rs .html .css .json .xml .md .yaml .yml .env .sh .sql .php .rb .swift .kt"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload — Empty File (Error Test)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Attach an empty file to test error handling"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/",
+              "host": ["{{base_url}}"],
+              "path": ["upload", ""]
+            },
+            "description": "Test error handling when an empty file is uploaded. Should return 422."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Empty file returns 422', function() {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Image Upload",
+      "item": [
+        {
+          "name": "Upload Image (JPG / PNG / WebP)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select image: .jpg .jpeg .png .webp .gif"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/upload-image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "upload-image"]
+            },
+            "description": "Upload a standard image → OCR for text extraction → embed → store in Pinecone.\n\nIf no text found via OCR, automatically falls back to Groq Vision model."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Image upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "});",
+                  "pm.test('Response has source_type', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('source_type');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "    console.log('source_type:', json.source_type);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload Image (AVIF / HEIC / BMP — Auto Convert)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select image: .avif .heic .bmp .tiff — auto-converted to JPEG"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/upload-image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "upload-image"]
+            },
+            "description": "Upload unsupported image formats (.avif, .heic, .bmp, .tiff) → auto-converted to JPEG → Vision model describes it → embed → store in Pinecone."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Image upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has document_id', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('document_id');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "    console.log('document_id saved:', json.document_id);",
+                  "    console.log('source_type:', json.source_type);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload Image — No Text (Vision Fallback Test)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Upload a photo (cat, nature, etc.) with no text to test vision fallback"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/upload-image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "upload-image"]
+            },
+            "description": "Test the vision model fallback — upload a photo with no text (e.g. a cat photo). OCR will find nothing, Groq Vision will describe the image instead.\n\nExpected: source_type = 'vision'"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Upload successful', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('source_type is vision', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.source_type).to.eql('vision');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.document_id) {",
+                  "    pm.collectionVariables.set('document_id', json.document_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RAG Query",
+      "item": [
+        {
+          "name": "Query — With Document ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What is this document about?\",\n  \"document_id\": \"{{document_id}}\",\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/query/",
+              "host": ["{{base_url}}"],
+              "path": ["query", ""]
+            },
+            "description": "Ask a question filtered to a specific document.\n\nRequires: document_id variable (auto-set after any upload request)."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Query returns 200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has answer', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('answer');",
+                  "    pm.expect(json.answer.length).to.be.greaterThan(0);",
+                  "});",
+                  "pm.test('Response has sources', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('sources');",
+                  "    pm.expect(json.sources).to.be.an('array');",
+                  "});",
+                  "pm.test('Response echoes question', function() {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('question');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query — Summarize Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Summarize the content of this document\",\n  \"document_id\": \"{{document_id}}\",\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/query/",
+              "host": ["{{base_url}}"],
+              "path": ["query", ""]
+            },
+            "description": "Ask for a full summary of the uploaded document or image content."
+          },
+          "response": []
+        },
+        {
+          "name": "Query — All Documents (No Filter)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Summarize the key points\",\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/query/",
+              "host": ["{{base_url}}"],
+              "path": ["query", ""]
+            },
+            "description": "Query across ALL uploaded documents — no document_id filter."
+          },
+          "response": []
+        },
+        {
+          "name": "Query — Custom Top-K",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"What are the main conclusions?\",\n  \"document_id\": \"{{document_id}}\",\n  \"top_k\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/query/",
+              "host": ["{{base_url}}"],
+              "path": ["query", ""]
+            },
+            "description": "Query with top_k=10 to retrieve more context chunks."
+          },
+          "response": []
+        },
+        {
+          "name": "Query — Empty Question (Error Test)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"\",\n  \"document_id\": \"{{document_id}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/query/",
+              "host": ["{{base_url}}"],
+              "path": ["query", ""]
+            },
+            "description": "Test error handling for empty question. Should return 422."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Empty question returns 422', function() {",
+                  "    pm.response.to.have.status(422);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Query — No Matching Context (Edge Case)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"xyzzy frobnicator quantum entanglement of purple elephants\",\n  \"document_id\": \"{{document_id}}\",\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/query/",
+              "host": ["{{base_url}}"],
+              "path": ["query", ""]
+            },
+            "description": "Tests graceful handling when no relevant context is found in the document."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
