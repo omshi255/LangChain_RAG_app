@@ -1,46 +1,3 @@
-# from fastapi import APIRouter, UploadFile, File, HTTPException
-# import logging
-# from models import UploadResponse
-# from services.ingestion import process_document
-# from services.embeddings import embed_texts
-# from services.vector_store import upsert_chunks
-
-# router = APIRouter(prefix="/upload", tags=["Document Upload"])
-# logger = logging.getLogger(__name__)
-
-
-# @router.post("/", response_model=UploadResponse, summary="Upload and index a PDF document")
-# async def upload_document(file: UploadFile = File(...)):
-#     """
-#     Upload a PDF document to be processed and stored in the vector database.
-#     """
-#     try:
-#         file_bytes = await file.read()
-#         filename = file.filename or "unknown.pdf"
-
-#         chunks, document_id = process_document(file_bytes, filename)
-
-#         texts = [c["text"] for c in chunks]
-#         embeddings = embed_texts(texts)
-
-#         stored = upsert_chunks(chunks, embeddings)
-
-#         logger.info(f"Upload complete: {filename} → {stored} chunks stored")
-#         return UploadResponse(
-#             message="Document processed and indexed successfully.",
-#             document_id=document_id,
-#             chunks_stored=stored,
-#             filename=filename,
-#         )
-
-#     except ValueError as e:
-#         raise HTTPException(status_code=422, detail=str(e))
-#     except Exception as e:
-#         logger.error(f"Upload failed: {e}", exc_info=True)
-#         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
-
-
-
 import os
 import uuid
 import logging
@@ -52,9 +9,6 @@ from services.vector_store import upsert_chunks
 router = APIRouter(prefix="/upload", tags=["Document Upload"])
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────
-# EXTRACTORS
-# ─────────────────────────────────────────
 
 def extract_from_pdf(file_bytes: bytes) -> str:
     import fitz
@@ -113,9 +67,7 @@ def extract_from_text(file_bytes: bytes) -> str:
     raise ValueError("Could not decode file with any known encoding.")
 
 
-# ─────────────────────────────────────────
-# TEXT EXTENSIONS
-# ─────────────────────────────────────────
+
 
 TEXT_EXTENSIONS = {
     ".txt", ".py", ".js", ".ts", ".jsx", ".tsx",
@@ -125,10 +77,6 @@ TEXT_EXTENSIONS = {
     ".sql", ".r", ".swift", ".kt", ".php", ".rb",
 }
 
-
-# ─────────────────────────────────────────
-# MAIN EXTRACTOR
-# ─────────────────────────────────────────
 
 def extract_content(file_bytes: bytes, filename: str) -> tuple[str, str]:
     ext = os.path.splitext(filename)[1].lower()
@@ -155,11 +103,6 @@ def extract_content(file_bytes: bytes, filename: str) -> tuple[str, str]:
                 detail=f"Unsupported file type: '{ext}'"
             )
 
-
-# ─────────────────────────────────────────
-# CHUNKING
-# ─────────────────────────────────────────
-
 def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
     words = text.split()
     chunks = []
@@ -169,12 +112,6 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]
         chunks.append(" ".join(words[start:end]))
         start += chunk_size - overlap
     return chunks
-
-
-# ─────────────────────────────────────────
-# ENDPOINT
-# ─────────────────────────────────────────
-
 @router.post("/", response_model=UploadResponse, summary="Upload and index any file")
 async def upload_document(file: UploadFile = File(...)):
     """
@@ -194,11 +131,9 @@ async def upload_document(file: UploadFile = File(...)):
                 detail="No content could be extracted from this file."
             )
 
-        # Chunk the text
         document_id = str(uuid.uuid4())
         raw_chunks = chunk_text(extracted_text)
 
-        # Build chunks in same format as your existing upsert_chunks expects
         chunks = [
             {
                 "text": chunk,

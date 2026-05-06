@@ -1,0 +1,55 @@
+{
+  "info": {
+    "name": "RAG System - Memory & Sessions",
+    "_postman_id": "rag-memory-collection",
+    "description": "Test the memory/session endpoints and multi-turn conversation flow.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Query with session_id (Turn 1)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:8000/query/", "host": ["localhost"], "port": "8000", "path": ["query", ""] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"What is this document about?\",\n  \"session_id\": \"my-session-001\",\n  \"top_k\": 5\n}"
+        }
+      }
+    },
+    {
+      "name": "2. Follow-up query (Turn 2 - same session)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:8000/query/", "host": ["localhost"], "port": "8000", "path": ["query", ""] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"Can you give me more detail on the first point you mentioned?\",\n  \"session_id\": \"my-session-001\",\n  \"top_k\": 5\n}"
+        }
+      }
+    },
+    {
+      "name": "3. Get session history",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:8000/memory/sessions/my-session-001", "host": ["localhost"], "port": "8000", "path": ["memory", "sessions", "my-session-001"] }
+      }
+    },
+    {
+      "name": "4. List all active sessions",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:8000/memory/sessions", "host": ["localhost"], "port": "8000", "path": ["memory", "sessions"] }
+      }
+    },
+    {
+      "name": "5. Clear session history",
+      "request": {
+        "method": "DELETE",
+        "url": { "raw": "http://localhost:8000/memory/sessions/my-session-001", "host": ["localhost"], "port": "8000", "path": ["memory", "sessions", "my-session-001"] }
+      }
+    }
+  ]
+}

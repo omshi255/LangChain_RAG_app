@@ -1,0 +1,50 @@
+{
+  "info": {
+    "name": "RAG System - Streaming",
+    "_postman_id": "rag-streaming-collection",
+    "description": "Test the streaming endpoint POST /query/stream",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Stream Query (word-by-word)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "text/event-stream" }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/query/stream",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["query", "stream"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"What is this document about?\",\n  \"session_id\": \"stream-session-001\",\n  \"document_id\": null,\n  \"top_k\": 5\n}"
+        }
+      }
+    },
+    {
+      "name": "Stream Query with document_id",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "text/event-stream" }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/query/stream",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["query", "stream"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question\": \"Summarize the key points\",\n  \"session_id\": \"stream-session-001\",\n  \"document_id\": \"YOUR_DOCUMENT_ID_HERE\",\n  \"top_k\": 10\n}"
+        }
+      }
+    }
+  ]
+}
